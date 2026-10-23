@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clinic Tycoon – run a Singapore GP clinic for a year</title>
+<style>
+:root{--bg:#f3f7fb;--card:#fff;--ink:#1d2b3a;--mute:#6b7c8f;--pri:#0f8b8d;--pri2:#0b6e70;--acc:#ff9f1c;--good:#2a9d4b;--bad:#d64545;--warn:#e9a100;--line:#e3eaf2;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#e6f6f4 0,#f3f7fb 260px);color:var(--ink);font-size:15px;line-height:1.45}
+header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--pri);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+header h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.3px}
+header .sub{font-size:12px;opacity:.85}
+header .grow{flex:1}
+header .pill{background:rgba(255,255,255,.18);border-radius:999px;padding:4px 10px;font-size:13px;white-space:nowrap}
+main{max-width:1100px;margin:0 auto;padding:14px}
+.card{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,40,60,.08),0 6px 18px rgba(20,40,60,.05);padding:16px;margin-bottom:14px}
+h2{margin:0 0 6px;font-size:20px}
+h3{margin:0 0 8px;font-size:16px}
+p{margin:6px 0}
+.mute{color:var(--mute);font-size:13px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stats{grid-template-columns:repeat(4,1fr)}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:700;padding:11px 18px;font-size:15px;cursor:pointer;box-shadow:0 3px 0 var(--pri2);transition:transform .05s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--pri2)}
+.btn.alt{background:#fff;color:var(--pri);border:2px solid var(--pri);box-shadow:none}
+.btn.big{font-size:17px;padding:14px 24px}
+.btn.acc{background:var(--acc);box-shadow:0 3px 0 #c97800}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sp{justify-content:space-between}
+.site{border:2px solid var(--line);border-radius:var(--r);padding:14px;position:relative;background:#fff}
+.site.won{border-color:var(--good);background:#f0fbf3}
+.site.lost{opacity:.6;background:#fafafa}
+.emoji{font-size:30px}
+.tag{display:inline-block;font-size:12px;border-radius:999px;padding:2px 8px;background:#eef3f8;color:#3a5068;margin:2px 2px 0 0}
+.tag.hot{background:#ffe9d6;color:#a2520b}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+input[type=number]{width:110px;padding:8px;border:2px solid var(--line);border-radius:10px;font-size:15px}
+.opt{border:2px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:#fff;display:block;user-select:none}
+.opt.on{border-color:var(--pri);background:#e8f6f5}
+.opt input{margin-right:6px}
+.seg{display:flex;border:2px solid var(--line);border-radius:12px;overflow:hidden;flex-wrap:wrap}
+.seg button{flex:1;border:0;background:#fff;padding:9px 6px;font-size:14px;cursor:pointer;min-width:80px;color:var(--ink)}
+.seg button.on{background:var(--pri);color:#fff;font-weight:700}
+.step{display:flex;align-items:center;gap:8px}
+.step button{width:34px;height:34px;border-radius:50%;border:2px solid var(--pri);background:#fff;color:var(--pri);font-size:18px;font-weight:800;cursor:pointer}
+.step b{min-width:22px;text-align:center;font-size:18px}
+.doc{border:2px solid var(--line);border-radius:12px;padding:10px;background:#fff}
+.doc.hired{border-color:var(--good);background:#f0fbf3}
+.stars{color:var(--acc);letter-spacing:1px}
+.stat{background:#fff;border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+.stat .lab{font-size:12px;color:var(--mute);display:flex;gap:4px;align-items:center}
+.stat .val{font-size:22px;font-weight:800}
+.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.bar{height:10px;background:#e9eff5;border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--pri);border-radius:99px}
+.meter{position:relative;height:16px;background:#e9eff5;border-radius:99px;overflow:visible;margin:22px 0 6px}
+.meter>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#ffb38a,#2a9d4b)}
+.meter .mk{position:absolute;top:-6px;width:3px;height:28px;background:var(--ink);border-radius:2px}
+.meter .mk span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right}
+td:first-child,th:first-child{text-align:left}
+tr.tot td{font-weight:800;border-top:2px solid var(--ink)}
+.i{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#dfe8f1;color:#3a5068;font-size:11px;font-weight:800;cursor:help;position:relative;font-style:normal;flex:none;vertical-align:middle}
+.i:hover::after,.i.show::after{content:attr(data-tip);position:absolute;bottom:22px;left:50%;transform:translateX(-50%);width:230px;background:#1d2b3a;color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;font-weight:400;line-height:1.4;z-index:50;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.note{background:#fff8e6;border:1px solid #ffe2a3;border-radius:10px;padding:8px 12px;font-size:13px;color:#7a5600}
+.why{background:#eaf4ff;border-left:4px solid #3b82c4;padding:8px 12px;border-radius:8px;font-size:14px}
+.lesson{background:#f0fbf3;border-left:4px solid var(--good);padding:8px 12px;border-radius:8px;font-size:14px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.steps span{font-size:12px;padding:4px 10px;border-radius:99px;background:#e3eaf2;color:#3a5068}
+.steps span.on{background:var(--acc);color:#fff;font-weight:700}
+.steps span.done{background:#cdebd6;color:#1d6b33}
+#modal{position:fixed;inset:0;background:rgba(15,30,45,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
+#modal.open{display:flex}
+#modal .box{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:92vh;overflow:auto;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.3);animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.choice{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;border-radius:12px;border:2px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:var(--ink)}
+.choice:hover{border-color:var(--pri);background:#f2fbfa}
+.choice b{display:block;font-size:15px;margin-bottom:2px}
+canvas{width:100%;height:220px;display:block}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#fff4e0;border:2px solid #ffd28a;border-radius:999px;padding:6px 12px;margin:4px;font-weight:700;font-size:14px}
+.badge.off{background:#f2f4f7;border-color:#e0e5eb;color:#9aa7b4;font-weight:500}
+.grade{font-size:64px;font-weight:900;line-height:1}
+.hero{text-align:center;padding:26px 16px}
+.hero .big{font-size:56px}
+details summary{cursor:pointer;font-weight:700;padding:4px 0}
+.log{max-height:260px;overflow:auto;font-size:13px}
+.log div{padding:5px 0;border-bottom:1px solid var(--line)}
+.sticky-run{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(243,247,251,0),#f3f7fb 30%);padding:14px 0 8px;z-index:10;text-align:center}
+@media(max-width:600px){header h1{font-size:16px}header .sub{display:none}.stat .val{font-size:18px}main{padding:10px}.card{padding:13px}.i:hover::after,.i.show::after{width:190px;left:auto;right:-10px;transform:none}}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:26px">🏥</div>
+  <div><h1>Clinic Tycoon</h1><div class="sub">Run a Singapore GP clinic for one year</div></div>
+  <div class="grow"></div>
+  <div id="hdr"></div>
+</header>
+<main id="app"></main>
+<div id="modal"><div class="box" id="mbox"></div></div>
+<script>
+/* =====================================================================
+   CONFIG – every number in the game lives here so it is easy to tune.
+   ALL FIGURES ARE ILLUSTRATIVE ONLY. They are NOT Raffles Medical data.
+   ===================================================================== */
+const CONFIG = {
+  months: 12,
+  startCash: 350000,          // S$ owner capital / bank loan available on day 1
+  depositMonths: 3,           // rental deposit (cash tied up, returned at end of lease)
+  weeksPerMonth: 4.33,
+  depreciationMonths: 60,     // fit-out written off over 5 years (non-cash cost)
+  sessions: {                 // opening sessions: weekly hours each adds
+    am:   {label:'Morning',   icon:'🌅', hours:22.5, desc:'Mon–Fri 8:30am–1pm'},
+    pm:   {label:'Afternoon', icon:'☀️', hours:17.5, desc:'Mon–Fri 2pm–5:30pm'},
+    eve:  {label:'Evening',   icon:'🌙', hours:15,   desc:'Mon–Fri 6:30pm–9:30pm'},
+    wknd: {label:'Weekend',   icon:'🗓️', hours:9,    desc:'Sat & Sun mornings'}
+  },
+  sites: [
+    {id:'hdb', name:'Heartland HDB void deck', icon:'🏘️', area:'Older estate, e.g. Ang Mo Kio',
+     asking:11000, traffic:9, growth:1.0, competitors:3, chronicShare:0.42,
+     mix:{private:0.38, chas:0.32, hsg:0.22, corp:0.08}, sess:{am:1.1,pm:0.9,eve:1.2,wknd:1.1},
+     rivals:2, heat:[0.95,1.12], blurb:'Loyal older residents, lots of chronic disease, three clinics within 300m.'},
+    {id:'mall', name:'Suburban mall unit', icon:'🛍️', area:'Family mall, e.g. Tampines',
+     asking:26000, traffic:15, growth:1.0, competitors:2, chronicShare:0.2,
+     mix:{private:0.52, chas:0.13, hsg:0.1, corp:0.25}, sess:{am:0.9,pm:1.0,eve:1.15,wknd:1.45},
+     rivals:2, heat:[0.97,1.15], blurb:'Heavy footfall, young families, busy evenings and weekends, premium rent.'},
+    {id:'cbd', name:'CBD office tower', icon:'🏙️', area:'Raffles Place',
+     asking:18000, traffic:18, growth:1.0, competitors:4, chronicShare:0.1,
+     mix:{private:0.36, chas:0.02, hsg:0.02, corp:0.6}, sess:{am:1.2,pm:1.15,eve:0.3,wknd:0.08},
+     rivals:1, heat:[0.92,1.1], blurb:'Office workers on corporate panels. Dead at night and on weekends.'},
+    {id:'new', name:'New estate shophouse', icon:'🌱', area:'New town, e.g. Tengah',
+     asking:8000, traffic:5.5, growth:1.07, competitors:0, chronicShare:0.28,
+     mix:{private:0.42, chas:0.2, hsg:0.28, corp:0.1}, sess:{am:1.0,pm:0.9,eve:1.3,wknd:1.2},
+     rivals:1, heat:[0.9,1.1], blurb:'Cheap rent and no rivals yet, but residents are still moving in (traffic grows ~7% a month).'}
+  ],
+  landlordReserve: [0.9, 1.0],   // landlord's hidden minimum, as a fraction of asking rent
+  fitout: {
+    perRoom: 45000,              // S$ capital cost per consult room (standard tier)
+    shell: 40000,                // reception, waiting area, pharmacy, IT
+    tiers: {
+      basic:    {label:'Basic',    icon:'🧰', mult:0.8, rep:-6, desc:'Functional, a bit tired-looking.'},
+      standard: {label:'Standard', icon:'🛋️', mult:1.0, rep:0,  desc:'Clean, modern, comfortable.'},
+      premium:  {label:'Premium',  icon:'✨', mult:1.5, rep:8,  desc:'Boutique feel. Patients notice.'}
+    },
+    addons: {
+      lab:  {label:'Lab & point-of-care tests', icon:'🧪', cost:25000, run:600,  revPerVisit:6, share:0.35, demand:1.04, desc:'Rapid tests (e.g. dengue, flu, HbA1c). Helps in outbreaks and chronic care.'},
+      xray: {label:'X-ray',                     icon:'🩻', cost:90000, run:1500, revPerVisit:40, share:0.05, demand:1.05, desc:'Draws referrals and injury cases. Big upfront cost.'},
+      proc: {label:'Procedure room',            icon:'🩹', cost:35000, run:500,  revPerVisit:60, share:0.04, demand:1.03, desc:'Minor surgery, wound care, IUCD (intrauterine device) insertion. Higher-value visits.'}
+    }
+  },
+  staff: {
+    permHours: 44,               // weekly contracted hours
+    locumHours: 20,              // a locum covers ~20 hours a week
+    locumHourly: 130,            // S$ per hour (≈ S$11.3k a month for 20h a week)
+    caCost: 3100, fdCost: 2700,  // clinic assistant / nurse, front desk
+    caPerDoctor: 1.6,            // clinic assistants needed per doctor on shift (1.5–2)
+    hireFee: 3000,               // recruitment cost for a permanent doctor mid-year
+    severanceMonths: 1
+  },
+  doctorNames: ['Dr Tan Wei Ming','Dr Priya Nair','Dr Lim Hui Shan','Dr Ahmad Rizal','Dr Chua Kai Jun','Dr Rachel Ong','Dr Mohan Das','Dr Sarah Goh','Dr Benedict Koh','Dr Nur Aisyah','Dr Jason Teo','Dr Grace Low','Dr Daniel Yeo','Dr Kavitha Raj'],
+  throughput: { acute:6, chronic:3.5, speedMult:1.3, fatigueLine:5 },  // visits per doctor-hour
+  fees: {   // private bill per visit (consult + medication). Drug cost is taken off separately.
+    low:      {label:'Value',    bill:52, demand:1.2},
+    standard: {label:'Standard', bill:64, demand:1.0},
+    premium:  {label:'Premium',  bill:78, demand:0.8}
+  },
+  payers: {
+    private: {label:'Private',     icon:'💳', lag:0, desc:'Pays cash on the day.'},
+    chas:    {label:'CHAS',        icon:'🟦', bill:55, patientPays:18, lag:1, desc:'Community Health Assist Scheme: patient pays a subsidised amount, clinic claims the rest ~30 days later.'},
+    hsg:     {label:'Healthier SG',icon:'💚', bill:52, patientPays:14, lag:2, bundle:40, screenRate:0.2, screenFee:10, enrolPerYear:50, enrolRate:0.12, desc:'Patients enrol with one clinic. S$50 per enrollee a year, chronic bundles S$20–70, S$10 per screen. Claims paid ~60 days later.'},
+    corp:    {label:'Corporate',   icon:'🏢', bill:40, thinFee:28, lag:1, desc:'Companies pay a fixed panel fee (S$25–45) per visit, invoiced monthly, paid ~30 days later.'}
+  },
+  focusBoost: 1.8,              // weight multiplier for the payer you focus on
+  drugCostPct: 0.28,            // drugs cost ~25–35% of the bill
+  utilities: {base:1500, perRoom:500}, admin: 1500,   // S$ per month
+  demand: { awarenessStart:0.6, awarenessRamp:0.08, revisit:0.35, loyalAdd:0.10, loyalChurn:0.06, compEffect:0.15 },
+  seasonal: [1.05,1.0,0.95,0.95,1.0,1.05,1.1,1.0,0.95,1.0,1.05,1.15],
+  eventChance: 0.75,
+  passMark: 50
+};
+
+/* ===================== helpers ===================== */
+let seed = (typeof window!=='undefined' && window.__seed) || (Date.now() % 2147483646) + 1;
+function rng(){ seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+const rand=(a,b)=>a+(b-a)*rng();
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const $=s=>document.querySelector(s);
+const money=v=>(v<0?'-':'')+'S$'+Math.round(Math.abs(v)).toLocaleString('en-SG');
+const k=v=>{const a=Math.abs(v);return (v<0?'-':'')+'S$'+(a>=1000?(a/1000).toFixed(a>=100000?0:1)+'k':Math.round(a));};
+const pct=v=>Math.round(v*100)+'%';
+const tip=t=>`<i class="i" data-tip="${t.replace(/"/g,'&quot;')}" tabindex="0">i</i>`;
+const TIPS={
+  cash:'Cash: money actually in the bank. Claims from CHAS, Healthier SG and corporate panels arrive 30–60 days later, so cash can lag profit.',
+  pl:'P&L (profit and loss): what you earned this month minus what it cost, including fit-out depreciation, whether or not the cash has arrived yet.',
+  profit:'Cumulative profit: all monthly profits added together since opening.',
+  be:'Break-even: the point where income covers all costs. Shown as the patients per day you need to see for a month to make zero profit.',
+  ppd:'Patients per day: average visits seen per day the clinic is open.',
+  util:'Utilisation: patients seen as a share of what your doctors could see in their hours. Near 100% = full; demand above that is turned away.',
+  rep:'Reputation: how the neighbourhood rates you. Drives new walk-ins. Built by good care, short waits and friendly doctors.',
+  ret:'Retention: share of patients who come back to you next time they are unwell. Loyal patients are your cheapest source of income.',
+  dep:'Depreciation: the fit-out cost spread over 5 years as a monthly cost. Not a cash payment, but a real cost.',
+  low:'Lowest cash: the lowest your bank balance fell during the year. Below zero means you would have needed an overdraft.',
+  rec:'Receivables: claims you have earned but not yet been paid (CHAS, Healthier SG, corporate).',
+  docHours:'Doctor-hours: total hours doctors are actually consulting. Limited by the doctors you hire AND by your rooms and opening hours.',
+  chas:'CHAS: Community Health Assist Scheme – government subsidy for lower- and middle-income Singaporeans at GP clinics.',
+  hsg:'Healthier SG: national scheme where residents enrol with one family doctor for preventive and chronic care.',
+  corp:'Corporate panel: companies send staff to you for a fixed fee per visit, paid monthly in arrears.',
+  pace:'Pace: how many patients you book per doctor-hour. Speed mode brings quick cash now, but there are hidden costs.',
+  ca:'Clinic assistants / nurses: register, dispense, take vitals. You need about 1.6 per doctor on shift or everything slows down.',
+  fd:'Front desk: you need someone at the counter for every hour you are open, or queues and complaints build.'
+};
+
+/* ===================== state ===================== */
+let S;
+function newGame(){
+  S = {phase:'intro', month:1, cash:CONFIG.startCash, site:null, rent:0, bids:{},
+    rooms:1, tier:'standard', addons:{lab:false,xray:false,proc:false}, capex:0,
+    doctors:[], cands:[], cas:2, fds:1,
+    sess:{am:true,pm:true,eve:false,wknd:false}, fee:'standard', focus:'private', pace:'normal',
+    rep:50, loyal:0, enrol:0, receivables:[], hist:[], cum:0, lowCash:CONFIG.startCash, cashStart:CONFIG.startCash,
+    hidden:{morale:70, fatigue:20, trust:60, risk:15},
+    competitors:0, corpDeal:false, speedMonths:0, chronicDrain:1, starIgnored:false,
+    turnover:0, audits:0, errors:0, chronicComp:[], retention:[], fatigueLog:[], moraleLog:[],
+    pending:[], log:[], mod:null, firstProfitMonth:null, flags:{}};
+  genCandidates();
+}
+function genCandidates(){
+  const used=S.doctors.map(d=>d.name.replace(' (locum)',''));
+  const avail=[...CONFIG.doctorNames].filter(n=>!used.includes(n)).sort(()=>rng()-0.5);
+  S.cands=[];
+  for(let i=0;i<3;i++){const sp=+rand(0.88,1.12).toFixed(2), rp=Math.round(rand(2,5));
+    S.cands.push({name:avail[i], type:'perm', speed:sp, rapport:rp, cost:Math.round((14600+(sp-0.88)*4000+rp*200)/100)*100, hours:CONFIG.staff.permHours});}
+  for(let i=0;i<2;i++){S.cands.push({name:avail[3+i]+' (locum)', type:'locum', speed:+rand(0.9,1.1).toFixed(2), rapport:Math.round(rand(1,3)),
+    cost:Math.round(CONFIG.staff.locumHourly*CONFIG.staff.locumHours*CONFIG.weeksPerMonth/100)*100, hours:CONFIG.staff.locumHours});}
+}
+
+/* ===================== core economics ===================== */
+function openHours(){let h=0;for(const x in S.sess) if(S.sess[x]) h+=CONFIG.sessions[x].hours; return h;}
+function openDays(){return ((S.sess.am||S.sess.pm||S.sess.eve)?5:0)*CONFIG.weeksPerMonth + (S.sess.wknd?2*CONFIG.weeksPerMonth:0);}
+function capexCalc(){const F=CONFIG.fitout;let c=F.shell+S.rooms*F.perRoom*F.tiers[S.tier].mult;
+  for(const a in S.addons) if(S.addons[a]) c+=F.addons[a].cost; return c;}
+function payroll(){return S.doctors.reduce((a,d)=>a+d.cost,0)+S.cas*CONFIG.staff.caCost+S.fds*CONFIG.staff.fdCost;}
+function docHoursWeekly(){const sup=S.doctors.reduce((a,d)=>a+d.hours,0);return Math.min(sup,openHours()*S.rooms);}
+function corpFee(){return S.corpDeal?CONFIG.payers.corp.thinFee:CONFIG.payers.corp.bill;}
+function payerWeights(){const site=S.site,w={};let t=0;
+  for(const p in site.mix){w[p]=site.mix[p]*(p===S.focus?CONFIG.focusBoost:1)*(p==='private'?CONFIG.fees[S.fee].demand:1);
+    if(p==='corp'&&S.corpDeal) w[p]*=2.6; t+=w[p];}
+  for(const p in w) w[p]/=t; return w;}
+function avgBill(w){const P=CONFIG.payers;return w.private*CONFIG.fees[S.fee].bill+w.chas*P.chas.bill+w.hsg*P.hsg.bill+w.corp*corpFee();}
+function addonRev(){let r=0;for(const a in S.addons) if(S.addons[a]){const A=CONFIG.fitout.addons[a];r+=A.revPerVisit*A.share;} return r;}
+function addonRun(){let r=0;for(const a in S.addons) if(S.addons[a]) r+=CONFIG.fitout.addons[a].run; return r;}
+function fixedMonthly(){return S.rent+payroll()+CONFIG.utilities.base+CONFIG.utilities.perRoom*S.rooms+CONFIG.admin+addonRun()+S.capex/CONFIG.depreciationMonths;}
+function bePpd(extra=0){const w=payerWeights();const contrib=avgBill(w)*(1-CONFIG.drugCostPct)+addonRev()*0.5;return (fixedMonthly()+extra)/contrib/(openDays()||1);}
+// Break-even on the bidding screen assumes a simple clinic: 1 standard room, 1 doctor, 2 assistants, 1 front desk, open weekdays.
+function bePpdForSite(site,rent){const C=CONFIG,P=C.payers;
+  const fixed=rent+15500+2*C.staff.caCost+C.staff.fdCost+C.utilities.base+C.utilities.perRoom+C.admin+(C.fitout.shell+C.fitout.perRoom)/C.depreciationMonths;
+  const m=site.mix, bill=m.private*C.fees.standard.bill+m.chas*P.chas.bill+m.hsg*P.hsg.bill+m.corp*P.corp.bill;
+  return fixed/(bill*(1-C.drugCostPct))/(5*C.weeksPerMonth);}
+
+function simulateMonth(){
+  const C=CONFIG, P=C.payers, site=S.site, mod=S.mod;
+  const H=openHours(), monthHours=H*C.weeksPerMonth;
+  let sf=0; for(const x in S.sess) if(S.sess[x]) sf+=C.sessions[x].hours*site.sess[x]; sf=H?sf/H:0;
+  const dhW=docHoursWeekly()*(1-mod.closed), dhM=dhW*C.weeksPerMonth;
+  const caRatio=Math.min(1,(S.cas*C.staff.permHours)/Math.max(1,C.staff.caPerDoctor*dhW));
+  const fdRatio=Math.min(1,(S.fds*C.staff.permHours)/Math.max(1,H));
+  const docs=S.doctors, wsum=docs.reduce((a,d)=>a+d.hours,0)||1;
+  const speed=docs.length?docs.reduce((a,d)=>a+d.speed*d.hours,0)/wsum:1;
+  const rapport=docs.length?docs.reduce((a,d)=>a+d.rapport*d.hours,0)/wsum:2;
+  const locumShare=docs.filter(d=>d.type==='locum').reduce((a,d)=>a+d.hours,0)/wsum;
+  const paceM=S.pace==='speed'?C.throughput.speedMult:1;
+  const support=0.7+0.3*caRatio;
+  const aRate=C.throughput.acute*speed*paceM*support, cRate=C.throughput.chronic*speed*paceM*support;
+  // demand
+  const aware=Math.min(1,C.demand.awarenessStart+(S.month-1)*C.demand.awarenessRamp+C.fitout.tiers[S.tier].rep/200);
+  const growth=Math.pow(site.growth,S.month-1);
+  const comp=1/(1+C.demand.compEffect*(site.competitors+S.competitors));
+  const repF=0.6+0.8*S.rep/100;
+  let addD=1; for(const a in S.addons) if(S.addons[a]) addD*=C.fitout.addons[a].demand;
+  const w=payerWeights();
+  const feeF=1+(C.fees[S.fee].demand-1)*site.mix.private;
+  const corpF=S.corpDeal?1.15:1;
+  const walkin=site.traffic*monthHours*sf*aware*growth*comp*repF*feeF*addD*corpF*mod.demand*C.seasonal[S.month-1];
+  const returning=S.loyal*C.demand.revisit*(S.pace==='speed'?0.9:1);
+  const demand=walkin+returning;
+  const chronicShare=clamp(site.chronicShare+(S.focus==='hsg'?0.12:S.focus==='chas'?0.08:0)-(S.corpDeal?0.08:0),0.03,0.7)*S.chronicDrain;
+  const blended=1/((1-chronicShare)/aRate+chronicShare/cRate);
+  const capacity=dhM*blended*mod.capacity;
+  const served=Math.min(demand,capacity), turnedAway=Math.max(0,demand-capacity);
+  const visits={}; for(const p in w) visits[p]=served*w[p];
+  const chronicServed=served*chronicShare;
+  // revenue
+  const privRev=visits.private*C.fees[S.fee].bill;
+  const chasRev=visits.chas*P.chas.bill, chasCash=visits.chas*P.chas.patientPays;
+  S.enrol+=visits.hsg*P.hsg.enrolRate*(1-S.enrol/(S.enrol+3000));
+  const hsgCap=S.enrol*P.hsg.enrolPerYear/12;
+  const hsgChronic=visits.hsg*Math.min(1,chronicShare*1.5);
+  const hsgRev=visits.hsg*P.hsg.bill+hsgChronic*P.hsg.bundle*0.35+visits.hsg*P.hsg.screenRate*P.hsg.screenFee+hsgCap;
+  const hsgCash=visits.hsg*P.hsg.patientPays;
+  const corpRev=visits.corp*corpFee();
+  const addR=served*addonRev();
+  const revenue=privRev+chasRev+hsgRev+corpRev+addR+mod.extraRev;
+  const drugs=(privRev+chasRev+visits.hsg*P.hsg.bill+corpRev)*C.drugCostPct+addR*0.5;
+  const salaries=payroll()+mod.salaryAdj, util=C.utilities.base+C.utilities.perRoom*S.rooms+addonRun();
+  const dep=S.capex/C.depreciationMonths;
+  const costs=S.rent+salaries+drugs+util+C.admin+dep+mod.extraCost;
+  const profit=revenue-costs;
+  // cash: private paid today; claims arrive 1–2 months later
+  const cashNow=privRev+chasCash+hsgCash+addR+mod.extraRev;
+  S.receivables.push({due:S.month+P.chas.lag, amt:chasRev-chasCash});
+  S.receivables.push({due:S.month+P.hsg.lag, amt:hsgRev-hsgCash});
+  S.receivables.push({due:S.month+P.corp.lag, amt:corpRev});
+  let collected=0; S.receivables=S.receivables.filter(r=>{if(r.due<=S.month){collected+=r.amt;return false;}return true;});
+  collected-=mod.lostClaims;
+  const cashOut=costs-dep, startCash=S.cash;
+  const midLow=startCash-cashOut+cashNow*0.6;        // rent and salaries go out before claims arrive
+  S.cash=startCash+cashNow+collected-cashOut;
+  S.lowCash=Math.min(S.lowCash,midLow,S.cash);
+  S.cum+=profit;
+  // hidden meters (never shown directly – they surface through events)
+  const Hd=S.hidden, pph=dhM?served/dhM:0;
+  Hd.fatigue=clamp(Hd.fatigue+(pph>C.throughput.fatigueLine?(pph-C.throughput.fatigueLine)*9:-7)+(S.pace==='speed'?6:0)+(mod.stretch?10:0));
+  Hd.morale=clamp(Hd.morale+(caRatio<0.95?-9:2)+(fdRatio<0.95?-4:1)+(S.pace==='speed'?-4:0)+(Hd.fatigue>60?-5:0));
+  Hd.trust=clamp(Hd.trust+(S.pace==='speed'?-6:1)+(fdRatio<0.95?-4:0)+(turnedAway>demand*0.15?-3:0)+(rapport-3)*2-locumShare*5+(caRatio<0.9?-2:0));
+  Hd.risk=clamp(Hd.risk+(S.pace==='speed'?6:-3)+(Hd.fatigue>60?5:0)+(caRatio<0.8?3:0)+(S.starIgnored?4:0));
+  if(S.pace==='speed'){S.speedMonths++;S.chronicDrain=Math.max(0.7,S.chronicDrain-0.05);} else S.chronicDrain=Math.min(1,S.chronicDrain+0.02);
+  const retention=clamp(0.45+Hd.trust/250+(rapport-3)*0.04-locumShare*0.12,0.3,0.92);
+  const target=clamp(0.55*Hd.trust+10*rapport+C.fitout.tiers[S.tier].rep-(turnedAway>demand*0.2?8:0)-(fdRatio<0.95?6:0));
+  S.rep=clamp(S.rep+(target-S.rep)*0.25);
+  S.loyal=S.loyal*(1-C.demand.loyalChurn)+served*retention*C.demand.loyalAdd;
+  const chronicDemand=demand*chronicShare;
+  const cc=clamp((chronicDemand?chronicServed/chronicDemand:1)*(S.pace==='speed'?0.72:1)*(0.8+0.2*caRatio)*(mod.closed>0.3?0.85:1),0,1);
+  S.chronicComp.push(cc); S.retention.push(retention); S.fatigueLog.push(Hd.fatigue); S.moraleLog.push(Hd.morale);
+  const days=openDays()||1;
+  const rec={month:S.month, demand, capacity, served, turnedAway, ppd:served/days, bePpd:bePpd(mod.salaryAdj+mod.extraCost), util:capacity?served/capacity:0, demandUtil:capacity?demand/capacity:0,
+    revenue, privRev, chasRev, hsgRev, corpRev, addR, extraRev:mod.extraRev, drugs, rent:S.rent, salaries, util2:util, admin:C.admin, dep, extra:mod.extraCost,
+    costs, profit, cash:S.cash, cashIn:cashNow+collected, cashOut, cum:S.cum, rec:S.receivables.reduce((a,r)=>a+r.amt,0), caRatio, fdRatio, pph, retention, locumShare, dhW};
+  if(profit>=0 && S.firstProfitMonth===null) S.firstProfitMonth=S.month;
+  rec.why=whyLine(rec);
+  S.hist.push(rec);
+  return rec;
+}
+
+// One-line "why this happened", always tied back to an earlier decision
+function whyLine(r){
+  const prev=S.hist[S.hist.length-1], days=openDays()||1;
+  if(r.profit>0 && r.cashIn<r.cashOut && r.rec>15000) return `You made a ${k(r.profit)} profit but your bank balance fell ${k(r.cashOut-r.cashIn)}: ${k(r.rec)} is still owed in claims, because CHAS, Healthier SG and corporate payers settle 30–60 days late.`;
+  if(r.demandUtil>1.12) return `You turned away about ${Math.round(r.turnedAway/days)} patients a day. Demand outran your ${S.rooms} room(s) and ${Math.round(r.dhW)} doctor-hours a week – more rooms, sessions or doctors would capture it.`;
+  if(r.caRatio<0.9) return `Doctors waited on dispensing and vitals: you have ${S.cas} clinic assistant(s) for about ${(r.dhW/(openHours()||1)).toFixed(1)} doctors on shift. Thin support staff slows the whole clinic.`;
+  if(r.fdRatio<0.95) return `The counter was unmanned for part of your ${openHours()} open hours a week. Queues and unanswered calls hurt your reputation.`;
+  if(S.pace==='speed') return `Speed mode squeezed ${r.pph.toFixed(1)} patients through each doctor-hour, lifting income now – but every month at this pace quietly drains trust and chronic patients.`;
+  if(r.util<0.55) return `The clinic was quiet (${pct(r.util)} utilisation). Your rent of ${k(S.rent)} and payroll of ${k(r.salaries)} were sized for more patients than the ${S.site.name.toLowerCase()} is sending you yet.`;
+  if(r.locumShare>0.4) return `Over ${pct(r.locumShare)} of doctor-hours were locums. Locums keep the doors open but cost more, and patients bond less so fewer come back.`;
+  if(prev && r.profit>prev.profit+5000) return `Profit rose ${k(r.profit-prev.profit)} on last month as returning patients grew – the loyalty you built in earlier months is paying off.`;
+  if(r.profit<0) return `You need about ${Math.ceil(r.bePpd)} patients a day to break even and saw ${Math.round(r.ppd)}. New clinics take months to build awareness and a loyal patient base.`;
+  return `Steady month: ${Math.round(r.ppd)} patients a day against a break-even of ${Math.ceil(r.bePpd)}. Your team, hours and fees are in balance.`;
+}
+
+/* ===================== events ===================== */
+// Each event: when() -> weight. Then either apply(mod) or choices[]. Every event teaches a lesson.
+const EVENTS=[
+  {id:'flu', icon:'🤧', title:'Flu season surge', when:()=>[1,2,6,7,12].includes(S.month)?3:1,
+   text:'Influenza is spreading. Walk-ins jump this month.',
+   apply:m=>{m.demand*=1.25; if(S.addons.lab) m.extraRev+=2500;},
+   lesson:'Seasonal surges reward clinics with spare capacity. If you are already full, the extra patients go to the clinic next door.'},
+  {id:'dengue', icon:'🦟', title:'Dengue cluster nearby', when:()=>S.month>=5&&S.month<=9?2.5:0.6,
+   text:'NEA (National Environment Agency) has flagged a dengue cluster in your area. Feverish patients are queueing.',
+   apply:m=>{m.demand*=1.2; if(S.addons.lab) m.extraRev+=4000;},
+   lesson:()=>S.addons.lab?'Your point-of-care lab let you test for dengue on the spot – extra income and faster, safer care.':'Without point-of-care tests you had to send dengue tests out, so you missed income and patients waited longer for answers.'},
+  {id:'resign', icon:'🚪', title:'Cover gap: a doctor resigns', when:()=>S.doctors.some(d=>d.type==='perm')?(S.hidden.fatigue>65||S.hidden.morale<35?6:0.3):0,
+   pre:()=>{const p=S.doctors.filter(d=>d.type==='perm');S._victim=p[Math.floor(rng()*p.length)];},
+   text:()=>`${S._victim.name} hands in a resignation letter, effective now. ${S.hidden.fatigue>65||S.hidden.morale<35?'"I\'m exhausted – I can\'t keep up this pace."':'"My family is relocating overseas."'} You have a gap this month while you recruit.`,
+   choices:[
+     {label:'🧑‍⚕️ Book a locum to cover', sub:'About S$11–25k this month. Doors stay open.', fn:m=>{const v=S._victim;removeDoc(v);m.temp.push({name:'Cover locum',type:'locum',temp:true,hours:v.hours,speed:1,rapport:2,cost:0});m.salaryAdj+=Math.round(CONFIG.staff.locumHourly*v.hours*CONFIG.weeksPerMonth);},
+      out:'A locum covered the sessions. Expensive, but patients kept coming.'},
+     {label:'🚪 Close their sessions', sub:'Cheapest, but you lose that doctor\'s hours this month.', fn:m=>{removeDoc(S._victim);S.rep=clamp(S.rep-5);},
+      out:'Patients found the door shut and some went elsewhere for good.'},
+     {label:'💪 Stretch the remaining team', sub:'No extra cost, but everyone works harder.', fn:m=>{const v=S._victim;removeDoc(v);m.temp.push({name:'Overtime',type:'perm',temp:true,hours:Math.round(v.hours*0.6),speed:0.95,rapport:2,cost:0});m.stretch=true;S.hidden.morale=clamp(S.hidden.morale-12);},
+      out:'The team pulled through with overtime – for now. Fatigue is building.'}],
+   lesson:()=>(S.hidden.fatigue>65||S.hidden.morale<35?'Overloaded doctors burn out, and replacing one costs far more than protecting one.':'Some departures are nobody\'s fault – a cash buffer and a locum list let you absorb them.')+' Hire a replacement on the Team panel before next month.'},
+  {id:'error', icon:'⚠️', title:'Clinical incident', when:()=>S.hidden.risk>55?5:0,
+   text:'A rushed consult missed a red flag. The patient was admitted and the family has complained.',
+   apply:m=>{S.rep=clamp(S.rep-12);m.extraCost+=6000;S.errors++;S.hidden.trust=clamp(S.hidden.trust-10);S.hidden.risk=clamp(S.hidden.risk-20);},
+   lesson:'Errors are rarely one person\'s fault. Tired doctors, thin support staff and rushed bookings stack the odds.'},
+  {id:'audit', icon:'🔍', title:'Claims audit and clawback', when:()=>S.speedMonths>=3?(S.focus!=='private'?5:2):0,
+   text:'An audit of your subsidy and panel claims finds thin documentation on very short consults. Money is clawed back.',
+   apply:m=>{m.extraCost+=12000;S.audits++;S.rep=clamp(S.rep-4);S.speedMonths=1;},
+   lesson:'Speed mode looks great on the monthly numbers. Audits look back over many months, and rushed consults leave thin notes.'},
+  {id:'rent', icon:'📈', title:'Rent review', when:()=>S.month>=4&&!S.flags.rent?(S.site.id==='mall'||S.site.id==='cbd'?2:1):0,
+   text:()=>`Your landlord raises rent by ${S.site.id==='hdb'?'5':'10'}% from this month.`,
+   apply:m=>{S.rent=Math.round(S.rent*(S.site.id==='hdb'?1.05:1.1));S.flags.rent=true;},
+   lesson:'Rent is fixed whatever your patient numbers. An aggressive rent bid leaves you exposed when it goes up again.'},
+  {id:'comp', icon:'🏪', title:'Competitor opens nearby', when:()=>S.competitors<2?(S.site.id==='new'?2.5:1.2):0,
+   text:'A new chain clinic has opened two blocks away with launch promotions.',
+   apply:m=>{S.competitors++;},
+   lesson:'Competition splits walk-in traffic. Loyal patients who trust their doctor are your best defence.'},
+  {id:'review', icon:'⭐', title:'Bad online review goes viral', when:()=>S.hidden.trust<55?3:0.7,
+   text:'A one-star review about a long wait and a rushed doctor is shared in the neighbourhood Facebook group.',
+   apply:m=>{S.rep=clamp(S.rep-(S.hidden.trust<50?10:5));},
+   lesson:'Reputation takes months to build and one bad week to dent. Waits and rapport matter as much as clinical skill.'},
+  {id:'corpOffer', icon:'🤝', title:'Corporate panel contract offer', when:()=>!S.corpDeal&&!S.flags.corp&&S.month<=9?1.5:0,
+   text:()=>`A large logistics firm wants you on its panel: lots of extra staff visits at a thin ${money(CONFIG.payers.corp.thinFee)} per visit, paid 30 days later.`,
+   choices:[
+     {label:'✍️ Sign the contract', sub:'Guaranteed volume, low fee. Fills your slots.', fn:m=>{S.corpDeal=true;S.flags.corp=true;},out:'Signed. Expect a busier clinic – watch whether panel patients crowd out better-paying ones.'},
+     {label:'🙅 Decline politely', sub:'Keep slots for private, CHAS and Healthier SG patients.', fn:m=>{S.flags.corp=true;},out:'You kept your capacity for higher-value visits.'}],
+   lesson:'Volume is not profit. A thin-fee contract helps if you have empty slots; if you are already full it crowds out better payers.'},
+  {id:'claims', icon:'❌', title:'Claims batch rejected', when:()=>S.hist.length&&S.focus!=='private'?1.6:(S.hist.length?0.5:0),
+   text:'A batch of claims is rejected for missing diagnosis codes. Some are past the resubmission deadline.',
+   apply:m=>{const t=S.receivables.filter(r=>r.due<=S.month).reduce((a,r)=>a+r.amt,0);m.lostClaims=Math.round(Math.max(1500,Math.min(t*0.35,15000)));},
+   lesson:'Claims are only cash once they are paid. Clean coding and a weekly claims check protect your cash flow.'},
+  {id:'licence', icon:'📋', title:'Licence / indemnity renewal missed', when:()=>S.month>=3&&!S.flags.lic?0.7:0,
+   text:'Your clinic licence renewal slipped through the cracks. You must close for 3 days and pay a late fee while it is sorted.',
+   apply:m=>{S.flags.lic=true;m.closed=Math.max(m.closed,0.12);m.extraCost+=2500;},
+   lesson:'Boring admin has real costs. Put licence and medical indemnity renewals in a shared calendar with reminders.'},
+  {id:'star', icon:'🌟', title:'Your star doctor is overstating results', when:()=>S.doctors.length&&!S.flags.star&&S.month>=3?1.3:0,
+   pre:()=>{S._star=S.doctors.reduce((a,b)=>a.speed>b.speed?a:b);},
+   text:()=>`${S._star.name} sees the most patients, but you notice consult notes that overstate findings to justify extra tests and claims.`,
+   choices:[
+     {label:'🔎 Investigate properly', sub:'Some friction and cost now.', fn:m=>{S.flags.star=true;m.extraCost+=3000;S.hidden.morale=clamp(S.hidden.morale-4);S.hidden.risk=clamp(S.hidden.risk-15);},out:'You reviewed the notes, gave clear feedback and retrained. Short-term pain, long-term safety.'},
+     {label:'🙈 Ignore it – the numbers are good', sub:'No cost today.', fn:m=>{S.flags.star=true;S.starIgnored=true;S.pending.push({month:Math.min(CONFIG.months,S.month+3),id:'starPenalty'});},out:'Nothing happens… for now.'},
+     {label:'👋 Move him on', sub:'Lose a top producer this month.', fn:m=>{S.flags.star=true;m.extraCost+=S._star.type==='perm'?S._star.cost:0;removeDoc(S._star);S.hidden.risk=clamp(S.hidden.risk-20);},out:'A tough call, and you paid a month in lieu of notice. Hire a replacement on the Team panel.'}],
+   lesson:'Revenue that depends on overstated claims is a liability, not an asset. Problems you ignore tend to come back bigger.'},
+  {id:'fair', icon:'🎪', title:'Community health fair', when:()=>1,
+   text:'The Residents\' Committee invites you to run a free screening booth at the weekend.',
+   apply:m=>{S.rep=clamp(S.rep+6);m.extraCost+=1500;S.enrol+=S.focus==='hsg'?80:20;},
+   lesson:'Showing up in the community builds awareness and trust that pays back in walk-ins and Healthier SG enrolments.'},
+  {id:'praise', icon:'💐', title:'A thank-you card goes up on the wall', when:()=>S.hidden.trust>70?2:0.3,
+   text:'A family writes to thank your team for spotting their father\'s stroke early.',
+   apply:m=>{S.rep=clamp(S.rep+5);S.hidden.morale=clamp(S.hidden.morale+6);},
+   lesson:'Good care gets noticed. Word of mouth is the cheapest marketing a GP clinic has.'}
+];
+const PENDING={
+  starPenalty:{icon:'🚨',title:'The overstated claims catch up with you',text:'An insurer\'s audit flags your star doctor\'s claims. You must repay them, and the story gets around.',
+    apply:m=>{m.extraCost+=18000;S.audits++;S.rep=clamp(S.rep-12);S.hidden.trust=clamp(S.hidden.trust-10);},
+    lesson:'Ignoring the problem did not make it go away – it made it bigger. An early investigation would have cost a fraction.'}
+};
+function removeDoc(d){S.doctors=S.doctors.filter(x=>x!==d);S.turnover++;genCandidates();}
+
+/* ===================== rendering ===================== */
+function steps(cur){const L=[['bid','1 · Site'],['fit','2 · Fit-out'],['team','3 · Team'],['ops','4 · Operations'],['month','5 · Run 12 months']];
+  let done=true; return `<div class="steps">${L.map(([id,l])=>{if(id===cur){done=false;return `<span class="on">${l}</span>`;}return `<span class="${done?'done':''}">${l}</span>`;}).join('')}</div>`;}
+function header(){
+  if(S.phase==='intro'||S.phase==='report'){$('#hdr').innerHTML='';return;}
+  $('#hdr').innerHTML=`<div class="row" style="gap:6px;justify-content:flex-end"><span class="pill">💰 ${k(S.cash)}</span>${S.phase==='month'?`<span class="pill">📅 ${S.month}/12</span>`:''}</div>`;
+}
+function render(keepScroll){header();const a=$('#app');const y=window.scrollY||0;
+  ({intro:rIntro,bid:rBid,fit:rFit,team:rTeam,ops:rOps,month:rMonth,report:rReport})[S.phase](a);
+  if(window.scrollTo) window.scrollTo(0,keepScroll?y:0);}
+const rerender=()=>render(true);
+
+function rIntro(a){a.innerHTML=`<div class="card hero"><div class="big">🏥💼📈</div><h2 style="font-size:26px">Can you run a GP clinic for a year?</h2>
+  <p>You have <b>${money(CONFIG.startCash)}</b> to open a family clinic in Singapore. Bid for a site, fit it out, hire your team and run it month by month.</p>
+  <p class="mute">Break even, keep your patients and your team happy, and deliver safe care. Profit alone won't get you a pass.</p>
+  <div class="grid g4" style="margin:18px 0;text-align:left">
+   <div class="stat"><div class="emoji">🏷️</div><b>Bid</b><div class="mute">Win a site against rival clinics</div></div>
+   <div class="stat"><div class="emoji">🛠️</div><b>Build</b><div class="mute">Rooms, lab, X-ray, renovation</div></div>
+   <div class="stat"><div class="emoji">👩‍⚕️</div><b>Hire</b><div class="mute">Doctors, locums, assistants</div></div>
+   <div class="stat"><div class="emoji">📊</div><b>Run</b><div class="mute">12 months of patients and surprises</div></div></div>
+  <button class="btn big acc" id="start">Start my clinic ▶</button>
+  <p class="note" style="margin-top:18px">All figures in this game are illustrative only, loosely based on public Singapore ranges. They are not Raffles Medical Group data.</p></div>`;
+  $('#start').onclick=()=>{S.phase='bid';render();};}
+
+function rBid(a){
+  const won=S.site;
+  a.innerHTML=`${steps('bid')}<div class="card"><h2>🏷️ Bid for a clinic site</h2>
+   <p>Each unit has an asking rent. Rival clinic groups are bidding too, and the landlord has a hidden minimum. Enter the <b>monthly rent</b> you'll offer – one sealed bid per unit.</p>
+   <p class="mute">Bid too low and you lose the unit. Overbid and you pay that rent every month. Break-even ${tip(TIPS.be)} assumes a simple 1-room clinic with 1 doctor open on weekdays – watch it change as you type your bid.</p></div>
+   <div class="grid g2">${CONFIG.sites.map(s=>{const b=S.bids[s.id], st=b?b.result:null;
+     const heat=s.rivals>1?'<span class="tag hot">🔥 2 rival bidders</span>':'<span class="tag">1 rival bidder</span>';
+     return `<div class="site ${st==='won'?'won':st==='lost'?'lost':''}">
+      <div class="row sp"><div class="emoji">${s.icon}</div>${heat}</div>
+      <h3 style="margin-top:6px">${s.name}</h3><div class="mute">${s.area}</div><p style="font-size:14px">${s.blurb}</p>
+      <div class="kv"><span>Asking rent</span><b>${money(s.asking)}/mo</b></div>
+      <div class="kv"><span>Foot traffic</span><span>${'🚶'.repeat(Math.max(1,Math.round(s.traffic/3)))} ${s.growth>1?'<span class="tag">📈 growing</span>':''}</span></div>
+      <div class="kv"><span>Competing clinics nearby</span><b>${s.competitors}</b></div>
+      <div class="kv"><span>Patient mix</span><span style="font-size:12px;text-align:right">${Object.entries(s.mix).map(([p,v])=>CONFIG.payers[p].icon+' '+CONFIG.payers[p].label+' '+pct(v)).join('<br>')}</span></div>
+      <div class="kv"><span>Chronic disease share</span><b>${pct(s.chronicShare)}</b></div>
+      <div class="kv"><span>Break-even ${tip(TIPS.be)}</span><b id="be-${s.id}">${Math.ceil(bePpdForSite(s,b?b.amount:s.asking))} patients/day</b></div>
+      ${st?`<p class="${st==='won'?'good':'bad'}"><b>${st==='won'?'🎉 You won at '+money(b.amount)+'/mo':'❌ Lost – '+b.msg}</b></p>`:
+       won?'':`<div class="row" style="margin-top:10px"><span>S$</span><input type="number" step="500" min="0" id="bid-${s.id}" value="${s.asking}"><button class="btn" data-bid="${s.id}">Place bid</button></div>`}
+     </div>`;}).join('')}</div>
+   ${won?`<div class="sticky-run"><button class="btn big acc" id="next">Fit out my clinic ▶</button></div>`:''}`;
+  CONFIG.sites.forEach(s=>{const i=$('#bid-'+s.id);if(i)i.oninput=()=>{$('#be-'+s.id).textContent=Math.ceil(bePpdForSite(s,+i.value||0))+' patients/day';};});
+  a.querySelectorAll('[data-bid]').forEach(b=>b.onclick=()=>placeBid(b.dataset.bid,+$('#bid-'+b.dataset.bid).value));
+  if(won) $('#next').onclick=()=>{S.phase='fit';render();};
+}
+function placeBid(id,amt){
+  const s=CONFIG.sites.find(x=>x.id===id);
+  const reserve=s.asking*rand(...CONFIG.landlordReserve);
+  let best=0; for(let i=0;i<s.rivals;i++) best=Math.max(best,s.asking*rand(...s.heat));
+  best=Math.round(best/100)*100;
+  let res='won',msg='';
+  if(amt<reserve){res='lost';msg='below the landlord\'s hidden minimum.';}
+  else if(amt<=best){res='lost';msg='a rival offered '+money(best)+'/mo.';}
+  S.bids[id]={amount:amt,result:res,msg};
+  if(res==='won'){S.site=s;S.rent=amt;S.log.push(`🏷️ Won the ${s.name} at ${money(amt)}/mo (asking ${money(s.asking)}, best rival ${money(best)}).`);
+    openModal(`<div class="emoji">🎉</div><h2>You won the ${s.name}!</h2><p>Your rent is <b>${money(amt)}/month</b>. The best rival bid was ${money(best)}.</p>
+      <div class="lesson">📘 ${amt>best*1.08?'You overbid by about '+money(amt-best)+' a month – that is '+money((amt-best)*12)+' a year straight off your profit.':'Nicely judged – you beat the rivals without paying much over the odds.'}</div>
+      <p style="text-align:center"><button class="btn" id="ok">Great ▶</button></p>`);
+    $('#ok').onclick=()=>{closeModal();render();}; return;}
+  if(CONFIG.sites.every(x=>S.bids[x.id]&&S.bids[x.id].result==='lost')){
+    const fb=CONFIG.sites.find(x=>x.id==='new'), r=Math.round(fb.asking*1.15/100)*100;
+    S.site=fb;S.rent=r;S.bids.new={amount:r,result:'won',msg:''};
+    openModal(`<div class="emoji">📞</div><h2>The landlord calls back</h2><p>You lost every auction! The new estate landlord's preferred tenant pulled out, and they'll let you have the unit at <b>${money(r)}/mo</b> – 15% over asking.</p><div class="lesson">📘 Bidding below the asking rent can backfire when good sites are scarce.</div><p style="text-align:center"><button class="btn" id="ok">Accept</button></p>`);
+    $('#ok').onclick=()=>{closeModal();render();}; return;}
+  render(true);
+}
+
+function rFit(a){
+  const F=CONFIG.fitout, cap=capexCalc(), dep=S.rent*CONFIG.depositMonths, left=CONFIG.startCash-cap-dep;
+  a.innerHTML=`${steps('fit')}<div class="card"><h2>🛠️ Fit out your clinic</h2><p>Unit: <b>${S.site.icon} ${S.site.name}</b> at ${money(S.rent)}/month.</p></div>
+  <div class="grid g2"><div class="card"><h3>🚪 Consult rooms</h3><p class="mute">Each room lets one doctor consult at a time. More rooms = more capacity, if you staff them.</p>
+   <div class="seg">${[1,2,3].map(n=>`<button data-rooms="${n}" class="${S.rooms===n?'on':''}">${'🚪'.repeat(n)} ${n}</button>`).join('')}</div>
+   <h3 style="margin-top:16px">🎨 Renovation</h3><div class="grid">${Object.entries(F.tiers).map(([id,t])=>`<label class="opt ${S.tier===id?'on':''}"><input type="radio" name="tier" value="${id}" ${S.tier===id?'checked':''}>${t.icon} <b>${t.label}</b> – ${money(F.perRoom*t.mult)}/room<div class="mute">${t.desc}</div></label>`).join('')}</div></div>
+  <div class="card"><h3>➕ Add-ons</h3><div class="grid">${Object.entries(F.addons).map(([id,x])=>`<label class="opt ${S.addons[id]?'on':''}"><input type="checkbox" data-add="${id}" ${S.addons[id]?'checked':''}>${x.icon} <b>${x.label}</b> – ${money(x.cost)} <span class="mute">(+${money(x.run)}/mo to run)</span><div class="mute">${x.desc}</div></label>`).join('')}</div></div></div>
+  <div class="card"><h3>💸 Capital cost</h3>
+   <div class="kv"><span>Shell (reception, pharmacy, IT)</span><b>${money(F.shell)}</b></div>
+   <div class="kv"><span>${S.rooms} room(s), ${F.tiers[S.tier].label}</span><b>${money(S.rooms*F.perRoom*F.tiers[S.tier].mult)}</b></div>
+   ${Object.keys(S.addons).filter(x=>S.addons[x]).map(x=>`<div class="kv"><span>${F.addons[x].label}</span><b>${money(F.addons[x].cost)}</b></div>`).join('')}
+   <div class="kv"><span><b>Total fit-out</b></span><b>${money(cap)}</b></div>
+   <div class="kv"><span>Rental deposit (${CONFIG.depositMonths} months, refundable later)</span><b>${money(dep)}</b></div>
+   <div class="kv"><span>Depreciation ${tip(TIPS.dep)}</span><b>${money(cap/CONFIG.depreciationMonths)}/mo</b></div>
+   <div class="kv"><span>Cash left to run the clinic</span><b class="${left<80000?'bad':'good'}">${money(left)}</b></div>
+   ${left<80000?'<p class="bad">⚠️ That leaves very little cash for salaries while patient numbers build up.</p>':''}</div>
+  <div class="sticky-run"><button class="btn big acc" id="next" ${left<0?'disabled':''}>Hire my team ▶</button></div>`;
+  a.querySelectorAll('[data-rooms]').forEach(b=>b.onclick=()=>{S.rooms=+b.dataset.rooms;rerender();});
+  a.querySelectorAll('input[name=tier]').forEach(b=>b.onchange=()=>{S.tier=b.value;rerender();});
+  a.querySelectorAll('[data-add]').forEach(b=>b.onchange=()=>{S.addons[b.dataset.add]=b.checked;rerender();});
+  $('#next').onclick=()=>{S.capex=capexCalc();S.cash=CONFIG.startCash-S.capex-dep;S.lowCash=S.cash;S.cashStart=S.cash;S.phase='team';render();};
+}
+
+function teamPanel(inGame){
+  const H=openHours(), sup=S.doctors.reduce((a,d)=>a+d.hours,0), slot=H*S.rooms, dh=Math.min(sup,slot);
+  const caNeed=Math.round(CONFIG.staff.caPerDoctor*dh/CONFIG.staff.permHours*10)/10, fdNeed=Math.round(H/CONFIG.staff.permHours*10)/10;
+  const star=n=>'★'.repeat(n)+'☆'.repeat(5-n), spd=d=>d.speed>=1.05?'⚡ Fast':d.speed<=0.95?'🐢 Thorough':'👌 Average';
+  const card=(d,i,hired)=>`<div class="doc ${hired?'hired':''}"><b>${d.name}</b> <span class="tag">${d.type==='perm'?'Permanent · '+d.hours+'h/wk':'Locum · '+d.hours+'h/wk'}</span>
+     <div class="kv"><span>Speed</span><span>${spd(d)}</span></div><div class="kv"><span>Rapport</span><span class="stars">${star(d.rapport)}</span></div>
+     <div class="kv"><span>Cost</span><b>${money(d.cost)}/mo</b></div>
+     <button class="btn ${hired?'alt':''}" ${hired?'data-fire':'data-hire'}="${i}" style="margin-top:6px;padding:6px 12px">${hired?'Let go':'Hire'}</button></div>`;
+  return `<div class="card"><h3>👩‍⚕️ Doctors</h3><p class="mute">A permanent doctor works ${CONFIG.staff.permHours}h a week. A locum covers ~${CONFIG.staff.locumHours}h a week at ${money(CONFIG.staff.locumHourly)}/hour – flexible, but pricier per hour and patients bond less.${inGame?' Hiring a permanent doctor mid-year costs a '+money(CONFIG.staff.hireFee)+' recruitment fee; letting one go costs a month\'s pay.':''}</p>
+   ${S.doctors.length?`<h3 style="font-size:14px">Your doctors</h3><div class="grid g3">${S.doctors.map((d,i)=>card(d,i,true)).join('')}</div><h3 style="font-size:14px;margin-top:12px">Candidates</h3>`:''}
+   <div class="grid g3">${S.cands.map((d,i)=>card(d,i,false)).join('')}</div></div>
+  <div class="grid g2"><div class="card"><h3>🧑‍⚕️ Clinic assistants / nurses ${tip(TIPS.ca)}</h3><div class="row sp"><div class="step"><button data-st="cas:-1" aria-label="fewer assistants">−</button><b>${S.cas}</b><button data-st="cas:1" aria-label="more assistants">+</button></div><span class="mute">${money(CONFIG.staff.caCost)}/mo each</span></div>
+    <p class="${S.cas+0.05<caNeed?'bad':'good'}" style="font-size:14px">Needed for your doctor-hours: about ${caNeed}</p></div>
+   <div class="card"><h3>🛎️ Front desk ${tip(TIPS.fd)}</h3><div class="row sp"><div class="step"><button data-st="fds:-1" aria-label="fewer front desk">−</button><b>${S.fds}</b><button data-st="fds:1" aria-label="more front desk">+</button></div><span class="mute">${money(CONFIG.staff.fdCost)}/mo each</span></div>
+    <p class="${S.fds+0.05<fdNeed?'bad':'good'}" style="font-size:14px">Needed to cover ${H}h open a week: about ${fdNeed}</p></div></div>
+  <div class="card"><div class="kv"><span>Doctor-hours a week ${tip(TIPS.docHours)}</span><b>${sup}h hired · ${slot}h room-time · <span class="${sup<H?'bad':''}">${dh}h usable</span></b></div>
+   ${sup<H?`<p class="bad" style="font-size:14px">⚠️ You're open ${H}h a week but only have ${sup} doctor-hours – some sessions would have no doctor.</p>`:''}
+   ${sup>slot?`<p class="warn" style="font-size:14px">⚠️ You're paying for ${sup-slot} more doctor-hours than your rooms and opening hours can use.</p>`:''}
+   <div class="kv"><span>Monthly payroll</span><b>${money(payroll())}</b></div></div>`;
+}
+function bindTeam(a,inGame){
+  a.querySelectorAll('[data-hire]').forEach(b=>b.onclick=()=>{const d=S.cands.splice(+b.dataset.hire,1)[0];S.doctors.push(d);
+    if(inGame&&d.type==='perm'){S.cash-=CONFIG.staff.hireFee;S.log.push(`👩‍⚕️ M${S.month}: hired ${d.name} (fee ${money(CONFIG.staff.hireFee)}).`);}
+    else if(inGame) S.log.push(`👩‍⚕️ M${S.month}: booked ${d.name}.`); rerender();});
+  a.querySelectorAll('[data-fire]').forEach(b=>b.onclick=()=>{const d=S.doctors.splice(+b.dataset.fire,1)[0];
+    if(inGame){if(d.type==='perm'){S.cash-=d.cost;S.turnover++;}S.log.push(`👋 M${S.month}: let ${d.name} go.`);}S.cands.push(d);rerender();});
+  a.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{const [f,dv]=b.dataset.st.split(':');S[f]=Math.max(0,S[f]+(+dv));rerender();});
+}
+function rTeam(a){a.innerHTML=`${steps('team')}<div class="card"><h2>👥 Hire your team</h2><p>Your clinic opens Mon–Fri mornings and afternoons by default (${openHours()}h a week). You can change opening hours on the next screen and adjust your team every month.</p></div>${teamPanel(false)}
+  <div class="sticky-run"><button class="btn big acc" id="next" ${S.doctors.length?'':'disabled'}>${S.doctors.length?'Set opening hours & fees ▶':'Hire at least one doctor'}</button></div>`;
+  bindTeam(a,false); $('#next').onclick=()=>{S.phase='ops';render();};}
+
+function opsPanel(){
+  const C=CONFIG, w=payerWeights();
+  return `<div class="grid g2"><div class="card"><h3>🕘 Opening sessions</h3><div class="grid g2" style="gap:8px">${Object.entries(C.sessions).map(([id,s])=>`<label class="opt ${S.sess[id]?'on':''}"><input type="checkbox" data-sess="${id}" ${S.sess[id]?'checked':''}>${s.icon} <b>${s.label}</b><div class="mute">${s.desc} · ${s.hours}h/wk · local demand ×${S.site.sess[id]}</div></label>`).join('')}</div>
+   <p class="mute">Open ${openHours()}h a week, about ${Math.round(openDays())} days a month. Doctors on the roster: ${S.doctors.reduce((a,d)=>a+d.hours,0)}h a week.</p></div>
+  <div class="card"><h3>💲 Fee level</h3><div class="seg">${Object.entries(C.fees).map(([id,f])=>`<button data-fee="${id}" class="${S.fee===id?'on':''}">${f.label}<br><small>${money(f.bill)}/visit</small></button>`).join('')}</div>
+   <p class="mute">Private bill (consult + medication). Lower fees attract more private patients; higher fees fewer.</p>
+   <h3 style="margin-top:14px">⏱️ Pace ${tip(TIPS.pace)}</h3><div class="seg"><button data-pace="normal" class="${S.pace==='normal'?'on':''}">🩺 Normal</button><button data-pace="speed" class="${S.pace==='speed'?'on':''}">⚡ Speed mode</button></div>
+   <p class="mute">Speed mode books ~30% more patients per doctor-hour.</p></div></div>
+  <div class="card"><h3>🎯 Patient focus (payer mix)</h3><p class="mute">Who do you market to and set up for? Private pays on the day; CHAS ${tip(TIPS.chas)}, Healthier SG ${tip(TIPS.hsg)} and corporate ${tip(TIPS.corp)} claims pay 30–60 days later.</p>
+   <div class="grid g4">${Object.entries(C.payers).map(([id,p])=>`<label class="opt ${S.focus===id?'on':''}"><input type="radio" name="focus" value="${id}" ${S.focus===id?'checked':''}>${p.icon} <b>${p.label}</b><div class="mute">${p.desc}</div><div style="font-size:13px;margin-top:4px">Expected share: <b>${pct(w[id])}</b>${id==='corp'&&S.corpDeal?' (contract)':''}</div></label>`).join('')}</div>
+   <div class="kv" style="margin-top:10px"><span>Break-even with these settings ${tip(TIPS.be)}</span><b>${Math.ceil(bePpd())} patients/day</b></div></div>`;
+}
+function bindOps(a){
+  a.querySelectorAll('[data-sess]').forEach(b=>b.onchange=()=>{S.sess[b.dataset.sess]=b.checked;rerender();});
+  a.querySelectorAll('[data-fee]').forEach(b=>b.onclick=()=>{S.fee=b.dataset.fee;rerender();});
+  a.querySelectorAll('[data-pace]').forEach(b=>b.onclick=()=>{S.pace=b.dataset.pace;rerender();});
+  a.querySelectorAll('input[name=focus]').forEach(b=>b.onchange=()=>{S.focus=b.value;rerender();});
+}
+function rOps(a){a.innerHTML=`${steps('ops')}<div class="card"><h2>⚙️ Operations</h2><p>Set when you open, what you charge and who you serve. You can change these every month.</p></div>${opsPanel()}
+  <div class="sticky-run"><button class="btn big acc" id="next" ${openHours()?'':'disabled'}>Open the doors! 🎉</button></div>`;
+  bindOps(a); $('#next').onclick=()=>{S.phase='month';render();};}
+
+function statBox(label,val,tipTxt,cls=''){return `<div class="stat"><div class="lab">${label} ${tipTxt?tip(tipTxt):''}</div><div class="val ${cls}">${val}</div></div>`;}
+function rMonth(a){
+  const r=S.hist[S.hist.length-1], be=bePpd(), ppd=r?r.ppd:0, maxv=Math.max(be*1.6,ppd*1.15,10);
+  const owed=S.receivables.reduce((x,y)=>x+y.amt,0);
+  a.innerHTML=`<div class="card"><div class="row sp"><h2>${S.site.icon} Month ${S.month} of 12</h2><span class="mute">${S.site.name} · ${S.rooms} room(s) · ${S.doctors.length} doctor(s) · rent ${k(S.rent)}/mo</span></div>
+   <div class="bar" style="margin:8px 0 12px"><i style="width:${(S.month-1)/12*100}%;background:var(--acc)"></i></div>
+   <div class="grid stats">
+    ${statBox('💰 Cash',k(S.cash),TIPS.cash,S.cash<0?'bad':'')}
+    ${statBox('📈 Cumulative profit',k(S.cum),TIPS.profit,S.cum<0?'bad':'good')}
+    ${statBox('🧍 Patients/day',r?Math.round(r.ppd):'–',TIPS.ppd)}
+    ${statBox('⚙️ Utilisation',r?pct(r.util):'–',TIPS.util,r&&r.demandUtil>1.05?'warn':'')}
+    ${statBox('⭐ Reputation',Math.round(S.rep)+'/100',TIPS.rep)}
+    ${statBox('🔁 Retention',r?pct(r.retention):'–',TIPS.ret)}
+    ${statBox('📉 Lowest cash',k(S.lowCash),TIPS.low,S.lowCash<0?'bad':'')}
+    ${statBox('🧾 Claims owed to you',k(owed),TIPS.rec)}</div>
+   <h3 style="margin-top:16px">🎯 Break-even meter ${tip(TIPS.be)}</h3>
+   <div class="meter"><i style="width:${clamp(ppd/maxv*100)}%"></i><div class="mk" style="left:${clamp(be/maxv*100,4,96)}%"><span>Break-even ${Math.ceil(be)}/day</span></div></div>
+   <div class="mute">${r?`Last month you saw ${Math.round(ppd)} patients a day – ${ppd>=r.bePpd?'<b class="good">above break-even ✔</b>':'<b class="bad">'+Math.ceil(r.bePpd-ppd)+' short of break-even</b>'}.`:`With your current setup you need about ${Math.ceil(be)} patients a day to cover costs.`} ${S.firstProfitMonth?`First profitable month: <b>month ${S.firstProfitMonth}</b>.`:'No profitable month yet.'}</div></div>
+  ${r?`<div class="why">💡 <b>Why this happened (month ${r.month}):</b> ${r.why}</div><br>`:''}
+  <div class="grid g2"><div class="card"><h3>📊 Profit & cash over time ${tip(TIPS.profit+' The dashed line is your cash in the bank.')}</h3><canvas id="chart"></canvas>
+    <div class="mute"><span style="color:var(--pri)">━</span> cumulative profit &nbsp; <span style="color:var(--acc)">┅</span> cash in bank</div></div>
+   <div class="card"><h3>🧾 Last month's P&L ${tip(TIPS.pl)}</h3>${r?plTable(r):'<p class="mute">Your first month hasn\'t run yet. Review your settings below, then press Run.</p>'}</div></div>
+  <details class="card" ${S.month===1?'open':''}><summary>⚙️ Operations for month ${S.month} (hours, fees, pace, payer focus)</summary>${opsPanel()}</details>
+  <details class="card" ${S.doctors.length?'':'open'}><summary>👥 Team (${S.doctors.length} doctors, ${S.cas} assistants, ${S.fds} front desk · payroll ${k(payroll())}/mo)</summary>${teamPanel(true)}</details>
+  ${S.log.length?`<details class="card"><summary>📜 Event log</summary><div class="log">${S.log.slice().reverse().map(l=>`<div>${l}</div>`).join('')}</div></details>`:''}
+  <p class="note">Figures are illustrative only and are not Raffles Medical Group data.</p>
+  <div class="sticky-run"><button class="btn big acc" id="run" ${S.doctors.length&&openHours()?'':'disabled'}>${S.doctors.length?'▶ Run month '+S.month:'Hire a doctor to continue'}</button></div>`;
+  bindOps(a); bindTeam(a,true);
+  $('#run').onclick=runMonth;
+  drawChart();
+}
+function plTable(r){const row=(l,v,c='')=>`<tr class="${c}"><td>${l}</td><td class="${c&&v<0?'bad':''}">${money(v)}</td></tr>`;
+  return `<table>${row('💳 Private visits',r.privRev)}${r.chasRev>1?row('🟦 CHAS visits',r.chasRev):''}${r.hsgRev>1?row('💚 Healthier SG (visits, bundles, enrolment)',r.hsgRev):''}${r.corpRev>1?row('🏢 Corporate panel',r.corpRev):''}${r.addR>1?row('🧪 Lab / X-ray / procedures',r.addR):''}${r.extraRev?row('🦟 Outbreak testing',r.extraRev):''}
+   ${row('Revenue',r.revenue,'tot')}${row('Rent',-r.rent)}${row('Salaries',-r.salaries)}${row('Drugs & consumables',-r.drugs)}${row('Utilities & running costs',-r.util2)}${row('Admin, IT, insurance',-r.admin)}${row('Depreciation',-r.dep)}${r.extra?row('One-off event costs',-r.extra):''}
+   ${row('Profit',r.profit,'tot')}</table><p class="mute">Cash actually received: ${money(r.cashIn)} · Visits: ${Math.round(r.served).toLocaleString()}${r.turnedAway>1?` · Turned away: ${Math.round(r.turnedAway).toLocaleString()}`:''}</p>`;}
+function drawChart(){
+  const c=$('#chart'); if(!c||!c.getContext) return; let ctx; try{ctx=c.getContext('2d');}catch(e){return;} if(!ctx) return;
+  const dpr=window.devicePixelRatio||1, W=c.clientWidth||500, Hh=c.clientHeight||220; c.width=W*dpr;c.height=Hh*dpr;ctx.scale(dpr,dpr);
+  const cum=[0,...S.hist.map(h=>h.cum)], cash=[S.cashStart,...S.hist.map(h=>h.cash)];
+  const all=[...cum,...cash,0]; let mn=Math.min(...all), mx=Math.max(...all); if(mx-mn<1000){mx+=1000;mn-=1000;} const pad=(mx-mn)*0.1; mn-=pad;mx+=pad;
+  const L=50,R=8,T=10,B=22, x=i=>L+(W-L-R)*i/CONFIG.months, y=v=>T+(Hh-T-B)*(1-(v-mn)/(mx-mn));
+  ctx.font='11px sans-serif';ctx.fillStyle='#6b7c8f';ctx.strokeStyle='#e3eaf2';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const v=mn+(mx-mn)*i/4;ctx.beginPath();ctx.moveTo(L,y(v));ctx.lineTo(W-R,y(v));ctx.stroke();ctx.fillText(k(v),2,y(v)+4);}
+  for(let i=0;i<=CONFIG.months;i+=(W<400?3:1)) ctx.fillText(i===0?'Start':'M'+i,x(i)-(i?8:12),Hh-6);
+  ctx.strokeStyle='#1d2b3a';ctx.beginPath();ctx.moveTo(L,y(0));ctx.lineTo(W-R,y(0));ctx.stroke();
+  const line=(arr,col,dash)=>{ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash(dash);ctx.beginPath();arr.forEach((v,i)=>i?ctx.lineTo(x(i),y(v)):ctx.moveTo(x(i),y(v)));ctx.stroke();ctx.setLineDash([]);
+    arr.forEach((v,i)=>{ctx.fillStyle=col;ctx.beginPath();ctx.arc(x(i),y(v),3.5,0,7);ctx.fill();});};
+  line(cash,'#ff9f1c',[6,4]); line(cum,'#0f8b8d',[]);
+}
+
+/* ===================== month loop ===================== */
+function runMonth(){
+  S.mod={demand:1,capacity:1,extraCost:0,lostClaims:0,closed:0,extraRev:0,salaryAdj:0,stretch:false,temp:[]};
+  const due=S.pending.filter(p=>p.month<=S.month); S.pending=S.pending.filter(p=>p.month>S.month);
+  let ev=null;
+  if(due.length) ev=PENDING[due[0].id];
+  else if(rng()<CONFIG.eventChance){
+    const ws=EVENTS.map(e=>Math.max(0,+e.when()||0)), tot=ws.reduce((a,b)=>a+b,0); let r=rng()*tot;
+    for(let i=0;i<EVENTS.length;i++){r-=ws[i]; if(r<=0&&ws[i]>0){ev=EVENTS[i];break;}}
+  }
+  if(ev&&ev.pre) ev.pre();
+  const txt=ev?(typeof ev.text==='function'?ev.text():ev.text):'';
+  if(ev&&ev.choices){
+    openModal(`<div class="emoji">${ev.icon}</div><h2>${ev.title}</h2><p>${txt}</p><p class="mute">What do you do?</p>${ev.choices.map((c,i)=>`<button class="choice" data-ch="${i}"><b>${c.label}</b>${c.sub}</button>`).join('')}`);
+    document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{const c=ev.choices[+b.dataset.ch];c.fn(S.mod);finishMonth(ev,txt,c);});
+  } else { if(ev) ev.apply(S.mod); finishMonth(ev,txt,null); }
+}
+function finishMonth(ev,txt,choice){
+  S.doctors.push(...S.mod.temp);           // temporary cover for this month only
+  const r=simulateMonth();
+  S.doctors=S.doctors.filter(d=>!d.temp);
+  const lesson=ev?(typeof ev.lesson==='function'?ev.lesson():ev.lesson):'';
+  if(ev) S.log.push(`${ev.icon} M${r.month}: ${ev.title}${choice?' – you chose: '+choice.label.replace(/^\S+\s/,''):''}.`);
+  const last=S.month>=CONFIG.months;
+  openModal(`<h2>📅 Month ${r.month} results</h2>
+   ${ev?`<div class="card" style="background:#fffaf0;box-shadow:none;border:1px solid #ffe2a3"><div class="row"><span class="emoji">${ev.icon}</span><h3 style="margin:0">${ev.title}</h3></div>${choice?`<p>${choice.out}</p>`:`<p>${txt}</p>`}<div class="lesson">📘 <b>Lesson:</b> ${lesson}</div></div>`:'<p class="mute">A quiet month – no surprises.</p>'}
+   <div class="grid" style="gap:8px;grid-template-columns:1fr 1fr">${statBox('Profit',k(r.profit),TIPS.pl,r.profit<0?'bad':'good')}${statBox('Cash now',k(r.cash),TIPS.cash,r.cash<0?'bad':'')}${statBox('Patients/day',Math.round(r.ppd)+' <small class="mute" style="font-size:12px;font-weight:400">/ '+Math.ceil(r.bePpd)+' to break even</small>',TIPS.be)}${statBox('Utilisation',pct(r.util),TIPS.util)}</div>
+   <div class="why" style="margin-top:10px">💡 <b>Why this happened:</b> ${r.why}</div>
+   ${!S.doctors.length&&!last?'<p class="bad"><b>⚠️ You have no doctors left. Hire one on the Team panel before next month.</b></p>':''}
+   <p style="text-align:center;margin-top:14px"><button class="btn big acc" id="cont">${last?'See my end-of-year report 🏁':'Continue to month '+(r.month+1)+' ▶'}</button></p>`);
+  $('#cont').onclick=()=>{closeModal(); if(last){S.phase='report';} else S.month++; render();};
+}
+
+/* ===================== report card ===================== */
+function scorecard(){
+  const avg=a=>a.reduce((x,y)=>x+y,0)/(a.length||1);
+  const fin=clamp(40+S.cum/5000+(S.firstProfitMonth?(13-S.firstProfitMonth)*2:-10)+(S.lowCash>=0?8:-15+S.lowCash/5000));
+  const pat=clamp((avg(S.retention)-0.45)*200+S.rep*0.4);
+  const qual=clamp(avg(S.chronicComp)*100-S.audits*15-S.errors*15-(S.starIgnored?5:0));
+  const staff=clamp(105-avg(S.fatigueLog)*0.55-(100-avg(S.moraleLog))*0.4-S.turnover*12);
+  return {fin,pat,qual,staff};
+}
+function rReport(a){
+  const sc=scorecard(), P=CONFIG.passMark, pass=Object.values(sc).every(v=>v>=P), avg=(sc.fin+sc.pat+sc.qual+sc.staff)/4;
+  const grade=!pass?(avg>=55?'C':'D'):avg>=80?'A':avg>=65?'B':'C+';
+  const be=S.cum>=0, rev=S.hist.reduce((a,h)=>a+h.revenue,0);
+  const badges=[
+    ['🏁','Broke even for the year',be],['💧','Never ran out of cash',S.lowCash>=0],['🚀','Profitable by month 6',!!S.firstProfitMonth&&S.firstProfitMonth<=6],
+    ['❤️','Patient favourite',sc.pat>=70],['🛡️','Safe pair of hands',S.audits===0&&S.errors===0],['🩺','Chronic care champion',sc.qual>=80],
+    ['😊','Happy team',sc.staff>=70&&S.turnover===0],['⚖️','Balanced scorecard',pass]];
+  const lessons=[];
+  if(S.lowCash<0) lessons.push('Your bank balance dipped to '+k(S.lowCash)+'. Profit is not cash: claims pay 30–60 days late and the fit-out is paid upfront.');
+  else lessons.push('Your lowest cash point was '+k(S.lowCash)+'. Keeping a buffer let you ride out slow months and late claims.');
+  if(!S.firstProfitMonth) lessons.push('You never had a profitable month. Fixed costs (rent and salaries) were too big for the patients your site could bring.');
+  else lessons.push('Your first profitable month was month '+S.firstProfitMonth+'. New clinics need time for awareness and loyal patients to build.');
+  if(S.speedMonths>=2||S.audits) lessons.push('Speed mode and short consults lift short-term income but cost trust, chronic care and audit risk.');
+  if(S.turnover>0) lessons.push('You lost '+S.turnover+' doctor(s) during the year. Each departure costs recruitment, locum cover and patient loyalty.');
+  if(sc.qual<P) lessons.push('Chronic care slipped. Rushed or overbooked clinics squeeze out the longer visits that diabetes and hypertension patients need.');
+  if(S.corpDeal) lessons.push('The thin-fee corporate contract filled slots. Check whether it crowded out private, CHAS or Healthier SG patients who paid more.');
+  const mx=S.hist.reduce((a,h)=>Math.max(a,h.demandUtil),0); if(mx>1.15) lessons.push('At your busiest, demand was '+pct(mx-1)+' above what you could see. Capacity (rooms, doctors, sessions) was the bottleneck.');
+  const mn=S.hist.reduce((a,h)=>Math.min(a,h.util),1); if(mn<0.5) lessons.push('In your quietest month you used only '+pct(mn)+' of your doctor-hours. Paying for idle capacity is the fastest way to lose money.');
+  const bar=(l,v,t)=>`<div style="margin:10px 0"><div class="row sp"><span>${l} ${tip(t)}</span><b class="${v>=P?'good':'bad'}">${Math.round(v)}/100 ${v>=P?'✔':'✘'}</b></div><div class="bar"><i style="width:${v}%;background:${v>=P?'var(--good)':'var(--bad)'}"></i></div></div>`;
+  a.innerHTML=`<div class="card hero"><div class="big">${pass?'🏆':'📋'}</div><h2 style="font-size:24px">End-of-year report card</h2><div class="mute">${S.site.icon} ${S.site.name} · rent ${money(S.rent)}/mo · ${S.rooms} room(s)</div>
+   <div class="grade ${pass?'good':'bad'}" style="margin:12px 0">${grade}</div>
+   <p><b>${be?'✅ You broke even for the year':'❌ You did not break even this year'}</b> – cumulative profit ${money(S.cum)}.<br>${pass?'All four areas of the scorecard passed. Well run!':'To pass, all four areas need '+P+' or more – profit alone is not enough.'}</p></div>
+  <div class="grid g2"><div class="card"><h3>⚖️ Balanced scorecard</h3>
+    ${bar('💰 Financial',sc.fin,'Profit for the year, how early you broke even, and whether your cash ever ran out.')}
+    ${bar('❤️ Patients',sc.pat,'Retention and reputation: did patients come back and recommend you?')}
+    ${bar('🩺 Quality',sc.qual,'Chronic care completion, minus audit flags and clinical incidents.')}
+    ${bar('👥 Staff',sc.staff,'Doctor fatigue, team morale and turnover over the year.')}</div>
+   <div class="card"><h3>📊 The year in numbers</h3>
+    <div class="kv"><span>Revenue</span><b>${money(rev)}</b></div>
+    <div class="kv"><span>Profit ${tip(TIPS.pl)}</span><b class="${S.cum<0?'bad':'good'}">${money(S.cum)}</b></div>
+    <div class="kv"><span>First profitable month</span><b>${S.firstProfitMonth?'Month '+S.firstProfitMonth:'None'}</b></div>
+    <div class="kv"><span>Lowest cash ${tip(TIPS.low)}</span><b class="${S.lowCash<0?'bad':''}">${money(S.lowCash)}</b></div>
+    <div class="kv"><span>Cash at year end</span><b>${money(S.cash)}</b></div>
+    <div class="kv"><span>Claims still owed ${tip(TIPS.rec)}</span><b>${money(S.receivables.reduce((x,y)=>x+y.amt,0))}</b></div>
+    <div class="kv"><span>Total patient visits</span><b>${Math.round(S.hist.reduce((a,h)=>a+h.served,0)).toLocaleString()}</b></div>
+    <div class="kv"><span>Doctors lost</span><b>${S.turnover}</b></div><div class="kv"><span>Audit flags / clinical incidents</span><b>${S.audits} / ${S.errors}</b></div></div></div>
+  <div class="card"><h3>📈 Your year: profit and cash</h3><canvas id="chart"></canvas><div class="mute"><span style="color:var(--pri)">━</span> cumulative profit &nbsp; <span style="color:var(--acc)">┅</span> cash in bank</div></div>
+  <div class="card"><h3>🏅 Badges</h3>${badges.map(([i,l,on])=>`<span class="badge ${on?'':'off'}">${i} ${l}</span>`).join('')}</div>
+  <div class="card"><h3>📘 Key lessons</h3>${lessons.slice(0,6).map(l=>`<div class="lesson" style="margin:6px 0">${l}</div>`).join('')}
+   <p class="mute" style="margin-top:10px">🔓 Hidden meters revealed – doctor fatigue ${Math.round(S.hidden.fatigue)}/100 · team morale ${Math.round(S.hidden.morale)}/100 · patient trust ${Math.round(S.hidden.trust)}/100 · clinical risk ${Math.round(S.hidden.risk)}/100.</p></div>
+  <p class="note">Figures are illustrative only and are not Raffles Medical Group data.</p>
+  <div class="sticky-run"><button class="btn big acc" id="again">🔄 Play again</button></div>`;
+  $('#again').onclick=()=>{newGame();S.phase='bid';render();};
+  drawChart();
+}
+
+/* ===================== modal & tips ===================== */
+function openModal(h){$('#mbox').innerHTML=h;$('#modal').classList.add('open');$('#mbox').scrollTop=0;}
+function closeModal(){$('#modal').classList.remove('open');}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.i');document.querySelectorAll('.i.show').forEach(x=>{if(x!==t)x.classList.remove('show');});if(t){t.classList.toggle('show');e.preventDefault();e.stopPropagation();}},true);
+window.addEventListener('resize',()=>{if(S&&(S.phase==='month'||S.phase==='report'))drawChart();});
+newGame(); render();
+</script>
+</body>
+</html>
